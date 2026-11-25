@@ -1,0 +1,13 @@
+# Nunca enviar dados brutos ou planilhas
+*.csv
+*.xlsx
+*.xls
+*.xlsm
+*.txt
+*.parquet
+*.rds
+*.RData
+__pycache__/
+~$*
+Thumbs.db
+desktop.ini
