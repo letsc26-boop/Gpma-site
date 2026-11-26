@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salas de Acolhimento e Procedimento — Mensal - Região Central</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f3ef; margin: 0; padding: 15px; color: #333; }
+  .container { max-width: 1400px; margin: 0 auto; }
+  .header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; border-bottom: 2px solid #1a4d6e; padding-bottom: 8px; margin-bottom: 15px; }
+  .header-title { color: #1a4d6e; font-size: 24px; font-weight: bold; margin: 0; }
+  .header-subtitle { color: #3b7080; font-size: 13px; font-weight: 600; margin: 2px 0 0 0; }
+  .nav-container { display: flex; flex-direction: column; align-items: flex-end; }
+  .nav-label { font-size: 10px; font-weight: bold; color: #1a4d6e; margin-bottom: 3px; text-transform: uppercase; }
+  .nav-buttons { display: flex; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .nav-btn { background-color: #fff; color: #1a4d6e; border: 1px solid #b0c4de; border-radius: 20px; padding: 5px 12px; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all .2s; font-family: inherit; }
+  .nav-btn:hover, .nav-btn.active { background-color: #1a4d6e; color: #fff; }
+  .credits-top { font-size: 10px; color: #555; text-align: right; }
+
+  .filters-panel { background: #fff; padding: 12px 15px; border-radius: 8px; border: 1px solid #dcdcd6; margin-bottom: 15px; display: flex; gap: 12px; }
+  .filter-group { flex: 1; display: flex; flex-direction: column; }
+  .filter-group label { font-size: 10px; font-weight: bold; color: #1a4d6e; margin-bottom: 4px; text-transform: uppercase; }
+  .filter-group select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; background: #fff; height: 34px; }
+
+  .kpi-row { display: flex; gap: 15px; margin-bottom: 15px; }
+  .kpi-card { flex: 1; background: #fff; border: 1px solid #dcdcd6; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,.05); border-top: 4px solid var(--c, #1a4d6e); cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(26,77,110,.15); }
+  .kpi-title { font-size: 10px; color: #6c757d; font-weight: 600; text-transform: uppercase; }
+  .kpi-value { font-size: 22px; color: var(--c, #1a4d6e); font-weight: bold; margin-top: 3px; }
+  .kpi-sub { font-size: 10.5px; color: #6c757d; }
+
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+  .chart-card { background: #fff; border: 1px solid #dcdcd6; border-radius: 8px; padding: 12px 15px; box-shadow: 0 2px 4px rgba(0,0,0,.05); min-width: 0; }
+  .chart-title { font-size: 14px; color: #1a4d6e; font-weight: bold; margin-bottom: 4px; border-left: 4px solid #6a9ab0; padding-left: 6px; cursor: pointer; }
+  .info-chip { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 600; color: #3b7080; background: #e8f1f5; border: 1px solid #c8dde6; border-radius: 10px; padding: 1px 8px; vertical-align: middle; }
+  .chart-title:hover .info-chip, .kpi-card:hover .info-chip { background: #1a4d6e; color: #fff; border-color: #1a4d6e; }
+  .dica-clique { font-size: 10px; color: #6c757d; font-style: italic; margin: 0 0 6px 10px; }
+  .js-plotly-plot .plotly .cursor-crosshair, .js-plotly-plot .plotly .nsewdrag { cursor: pointer !important; }
+
+  .table-card { background: #fff; border: 1px solid #dcdcd6; border-radius: 8px; padding: 12px 15px; margin-bottom: 15px; }
+  .table-container { max-height: 340px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+  th { background: #1a4d6e; color: #fff; padding: 8px 10px; position: sticky; top: 0; }
+  td { padding: 6px 10px; border-bottom: 1px solid #ddd; }
+  td.n { text-align: right; font-weight: 600; }
+  tr:hover { background: #f1f7fa; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #fff; }
+  .footer { display: flex; justify-content: space-between; border-top: 2px solid #1a4d6e; padding-top: 8px; font-size: 11px; color: #333; font-weight: bold; }
+
+  /* Pop-up */
+  .info-fundo { position: fixed; inset: 0; z-index: 1000; background: rgba(15,35,50,.55); display: none; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+  .info-fundo.aberto { display: flex; }
+  .info-caixa { position: relative; background: #fff; border-radius: 14px; width: 100%; max-width: 760px; box-shadow: 0 20px 50px rgba(0,0,0,.3); overflow: hidden; }
+  .info-topo { background: linear-gradient(120deg, #1a4d6e, #3b7080); color: #fff; padding: 16px 52px 14px 20px; }
+  .info-topo .info-ico { font-size: 26px; margin-right: 8px; vertical-align: middle; }
+  .info-topo h2 { display: inline; font-size: 19px; margin: 0; vertical-align: middle; }
+  .info-topo .info-sub { font-size: 11.5px; opacity: .9; margin-top: 4px; }
+  .info-fechar { position: absolute; top: 12px; right: 14px; background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.5); width: 32px; height: 32px; border-radius: 50%; font-size: 15px; cursor: pointer; }
+  .info-fechar:hover { background: #fff; color: #1a4d6e; }
+  .info-corpo { padding: 16px 20px 20px; font-size: 13px; line-height: 1.6; }
+  .info-corpo p { margin: 0 0 10px; }
+  .info-corpo h3 { font-size: 12px; text-transform: uppercase; color: #1a4d6e; margin: 16px 0 8px; border-bottom: 2px solid #eef2f4; padding-bottom: 4px; }
+  .info-alerta { background: #fff8e6; border-left: 4px solid #e9a23b; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin: 10px 0; }
+  .info-numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 6px 0 4px; }
+  .info-num { background: #f4f8fa; border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .info-num b { display: block; font-size: 18px; color: #1a4d6e; }
+  .info-num span { font-size: 10px; text-transform: uppercase; color: #6c757d; font-weight: 600; }
+  .sobe { color: #2e7d4f !important; } .desce { color: #b23a48 !important; }
+  .glossario { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .glossario-item { border: 1px solid #e3eaee; border-left: 5px solid var(--c); border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+  .glossario-item b { color: var(--c); }
+  .mini-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mini-tab td { padding: 5px 6px; border-bottom: 1px solid #eef2f4; }
+  .mini-tab td.n { text-align: right; white-space: nowrap; font-weight: 600; }
+  .mini-barra { height: 7px; background: #eef2f4; border-radius: 4px; overflow: hidden; min-width: 80px; }
+  .mini-barra div { height: 100%; border-radius: 4px; }
+  .bolinha { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  @media (max-width: 1000px) { .charts-grid { grid-template-columns: 1fr; } .glossario, .info-numeros { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1 class="header-title">Salas de Acolhimento e Procedimento — Mensal</h1>
+      <p class="header-subtitle">PRODUÇÃO NA ATENÇÃO PRIMÁRIA | REGIÃO CENTRAL</p>
+    </div>
+    <div class="nav-container">
+      <div class="nav-label">Navegação</div>
+      <div class="nav-buttons">
+        <a href="inicio.html" class="nav-btn">Voltar ao Início</a>
+        <a href="index.html" class="nav-btn">Monitoramento Quadrimestral</a>
+        <a href="mensal.html" class="nav-btn">Monitoramento Mensal</a>
+        <a href="producao.html" class="nav-btn">Produção Quadrimestral</a>
+        <a href="producao_mensal.html" class="nav-btn">Produção Mensal</a>
+        <a href="salas_mensal.html" class="nav-btn active">Salas Mensal</a>
+        <button class="nav-btn" onclick="limparFiltros()">Limpar Filtros</button>
+        <button class="nav-btn" onclick="abrirInfo('entenda')">📖 Entenda o Painel</button>
+      </div>
+      <div class="credits-top"><strong>Elaborado por:</strong> Letícia Stefany Costa & Ana Júlia Santos</div>
+    </div>
+  </div>
+
+  <div class="filters-panel">
+    <div class="filter-group"><label for="f-ubs">UBS</label><select id="f-ubs" onchange="atualizar()"></select></div>
+    <div class="filter-group"><label for="f-sala">Sala</label><select id="f-sala" onchange="atualizar()"></select></div>
+    <div class="filter-group"><label for="f-prof">Profissão</label><select id="f-prof" onchange="atualizar()"></select></div>
+    <div class="filter-group"><label for="f-per">Mês</label><select id="f-per" onchange="atualizar()"></select></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card" style="--c:#2a9d8f" onclick="abrirSala('Acolhimento')" title="Clique para entender">
+      <div class="kpi-title">Sala de Acolhimento <span class="info-chip">ⓘ</span></div><div class="kpi-value" id="k-acolh">0</div><div class="kpi-sub" id="k-acolh-s"></div></div>
+    <div class="kpi-card" style="--c:#c05c7e" onclick="abrirSala('Procedimento')" title="Clique para entender">
+      <div class="kpi-title">Sala de Procedimento <span class="info-chip">ⓘ</span></div><div class="kpi-value" id="k-proc">0</div><div class="kpi-sub" id="k-proc-s"></div></div>
+    <div class="kpi-card" onclick="abrirInfo('kpi-top')" title="Clique para entender">
+      <div class="kpi-title">UBS com maior produção <span class="info-chip">ⓘ</span></div><div class="kpi-value" id="k-top" style="font-size:19px">-</div><div class="kpi-sub" id="k-top-s"></div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title" onclick="abrirInfo('chart-ubs')">Produção por UBS <span class="info-chip">ⓘ entenda</span></div>
+      <div class="dica-clique">Clique numa barra para ver a produção da UBS por profissão</div>
+      <div id="g-ubs" style="width:100%;"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title" onclick="abrirInfo('chart-prof')">Produção por Profissão <span class="info-chip">ⓘ entenda</span></div>
+      <div class="dica-clique">Clique numa barra para ver em quais UBS essa profissão mais produziu</div>
+      <div id="g-prof" style="width:100%;"></div>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-bottom:15px">
+    <div class="chart-title" onclick="abrirInfo('chart-tempo')">Evolução da Produção por Mês <span class="info-chip">ⓘ entenda</span></div>
+    <div class="dica-clique">Clique num ponto para ver o detalhe do período</div>
+    <div id="g-tempo" style="width:100%; height:260px;"></div>
+  </div>
+
+  <div class="table-card">
+    <div class="chart-title" onclick="abrirInfo('tabela')">Detalhamento da Produção <span class="info-chip">ⓘ entenda</span></div>
+    <div class="table-container">
+      <table><thead><tr><th>UBS</th><th>Sala</th><th>Profissão</th><th>Equipe</th><th>Mês</th><th style="text-align:right">Quantidade</th></tr></thead>
+      <tbody id="tabela"></tbody></table>
+    </div>
+  </div>
+
+  <div class="footer"><span>Nenhum nome ou documento de profissional é exibido neste painel.</span><span>Fonte: e-SUS APS / SISAB</span></div>
+</div>
+
+<div class="info-fundo" id="info-modal" onclick="if (event.target === this) fecharInfo()">
+  <div class="info-caixa" role="dialog" aria-modal="true">
+    <button type="button" class="info-fechar" onclick="fecharInfo()" aria-label="Fechar">✕</button>
+    <div id="info-conteudo"></div>
+  </div>
+</div>
+
+<script>
+const D = [];
+const MODO = 'mensal';
+const ROT = MODO === 'mensal' ? 'Mês' : 'Quadrimestre';
+const COR_SALA = { 'Acolhimento': '#2a9d8f', 'Procedimento': '#c05c7e' };
+const ordemPer = {}; D.forEach(d => { ordemPer[d.Periodo] = d.Ordem; });
+const mesesPer = {}; D.forEach(d => { mesesPer[d.Periodo] = d.Meses; });
+const ordenarPer = l => l.sort((a, b) => String(ordemPer[a]).localeCompare(String(ordemPer[b])));
+const fmt = v => Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+const fmtPct = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+const soma = l => l.reduce((a, d) => a + d.Quantidade, 0);
+
+const INFO_SALA = {
+  'Acolhimento': { icone: '🤝', texto: 'Produção registrada no e-SUS pelos profissionais escalados na <b>sala de acolhimento</b> da UBS, onde é feita a escuta inicial de quem chega sem agendamento e a avaliação da necessidade de atendimento.',
+    alerta: 'Quem entra no acolhimento vem da planilha "Escala_Acolhimento.xlsx". Toda a produção do profissional escalado no mês é contada, como era feito nas abas "Acolhimento". UBS sem escala aparecem sem produção de acolhimento.' },
+  'Procedimento': { icone: '🩹', texto: 'Procedimentos individuais registrados no e-SUS na UBS, como curativos, administração de medicamentos e outros procedimentos de enfermagem e clínicos. Inclui o que foi feito pelas equipes e pelos profissionais sem equipe.',
+    alerta: 'Conta procedimentos, não pessoas: um mesmo usuário pode ter vários procedimentos no mesmo atendimento.' }
+};
+const INFO = {
+  'kpi-top': { icone: '🏆', titulo: 'UBS com maior produção', texto: ['UBS com a maior soma de produção (acolhimento + procedimento, ou só a sala escolhida no filtro) nos filtros atuais.'],
+    alerta: 'UBS maiores, com mais equipes e população, tendem a produzir mais. Compare com cuidado.' },
+  'chart-ubs': { icone: '🏥', titulo: 'Produção por UBS', texto: ['Produção de cada UBS separada por sala: <b style="color:#2a9d8f">acolhimento</b> e <b style="color:#c05c7e">procedimento</b>.', '<b>Clique numa barra</b> para ver a produção da UBS por profissão.'] },
+  'chart-prof': { icone: '👩‍⚕️', titulo: 'Produção por Profissão', texto: ['Quanto cada categoria profissional produziu em cada sala. O painel mostra só a profissão, sem identificar ninguém.', '<b>Clique numa barra</b> para ver em quais UBS essa profissão mais produziu.'] },
+  'chart-tempo': { icone: '📈', titulo: 'Evolução da Produção', texto: ['Produção de cada sala ao longo do tempo (' + (MODO === 'mensal' ? 'por mês' : 'por quadrimestre') + ').', '<b>Clique num ponto</b> para ver o detalhe do período e a variação em relação ao anterior.'],
+    alerta: MODO === 'mensal' ? 'Um mês fora do padrão pode ser falta de arquivo ou mudança na escala do acolhimento.' : 'Compare quadrimestres com o mesmo número de meses com dados. O número de meses aparece ao clicar no ponto.' },
+  'tabela': { icone: '📋', titulo: 'Detalhamento da Produção', texto: ['Cada combinação de UBS, sala, profissão, equipe e período, com a quantidade produzida. Mostra até 300 linhas, das maiores para as menores.'] },
+  'entenda': { icone: '📖', titulo: 'Entenda o painel das Salas', texto: ['Este painel mostra a produção da <b>sala de acolhimento</b> e da <b>sala de procedimento</b> das UBS da Região Central, a partir das planilhas extraídas do e-SUS APS.', 'Use os filtros de UBS, sala, profissão e ' + ROT.toLowerCase() + '. Clique nos cards, nos títulos e nas barras para ver explicações e detalhes.', 'Por privacidade, o painel mostra só a profissão e a quantidade produzida: nenhum nome ou documento aparece.'], glossario: true }
+};
+
+function popular(id, opcoes, todos) {
+  const s = document.getElementById(id), atual = s.value;
+  s.innerHTML = `<option value="Todos">${todos}</option>` + opcoes.map(o => `<option value="${o}">${o}</option>`).join('');
+  s.value = opcoes.includes(atual) ? atual : 'Todos';
+}
+function filtros() { return { ubs: v('f-ubs'), sala: v('f-sala'), prof: v('f-prof'), per: v('f-per') }; }
+function v(id) { return document.getElementById(id).value; }
+function filtrar(f, ignorar) {
+  ignorar = ignorar || [];
+  return D.filter(d => (ignorar.includes('ubs') || f.ubs === 'Todos' || d.UBS === f.ubs) &&
+                       (ignorar.includes('sala') || f.sala === 'Todos' || d.Sala === f.sala) &&
+                       (ignorar.includes('prof') || f.prof === 'Todos' || d['Profissão'] === f.prof) &&
+                       (ignorar.includes('per') || f.per === 'Todos' || d.Periodo === f.per));
+}
+function somarPor(l, campo) { const m = {}; l.forEach(d => m[d[campo]] = (m[d[campo]] || 0) + d.Quantidade); return Object.entries(m).filter(e => e[1] > 0).sort((a, b) => b[1] - a[1]); }
+function limparFiltros() { ['f-ubs', 'f-sala', 'f-prof', 'f-per'].forEach(id => document.getElementById(id).value = 'Todos'); atualizar(); }
+
+function iniciar() {
+  popular('f-ubs', [...new Set(D.map(d => d.UBS))].sort(), 'Todas as UBS');
+  popular('f-sala', ['Acolhimento', 'Procedimento'], 'Todas as salas');
+  popular('f-prof', [...new Set(D.map(d => d['Profissão']))].sort(), 'Todas as profissões');
+  popular('f-per', ordenarPer([...new Set(D.map(d => d.Periodo))]), 'Todos');
+  atualizar();
+}
+
+function atualizar() {
+  const f = filtros(), dados = filtrar(f);
+  const a = soma(dados.filter(d => d.Sala === 'Acolhimento')), p = soma(dados.filter(d => d.Sala === 'Procedimento'));
+  document.getElementById('k-acolh').textContent = fmt(a);
+  document.getElementById('k-proc').textContent = fmt(p);
+  const tot = a + p;
+  document.getElementById('k-acolh-s').textContent = tot ? fmtPct(a / tot * 100) + ' da produção das salas' : '';
+  document.getElementById('k-proc-s').textContent = tot ? fmtPct(p / tot * 100) + ' da produção das salas' : '';
+  const top = somarPor(dados, 'UBS')[0];
+  document.getElementById('k-top').textContent = top ? top[0] : '-';
+  document.getElementById('k-top-s').textContent = top ? fmt(top[1]) + ' registros' : '';
+  graficoBarras('g-ubs', dados, 'UBS');
+  graficoBarras('g-prof', dados, 'Profissão');
+  graficoTempo(filtrar(f, ['per']));
+  tabela(dados);
+  ligarCliques();
+}
+
+function graficoBarras(id, dados, campo) {
+  const ordem = somarPor(dados, campo).map(e => e[0]).reverse();
+  const traces = ['Procedimento', 'Acolhimento'].map(sala => {
+    const m = {}; dados.filter(d => d.Sala === sala).forEach(d => m[d[campo]] = (m[d[campo]] || 0) + d.Quantidade);
+    const x = ordem.map(k => m[k] || 0);
+    return { type: 'bar', orientation: 'h', name: sala, y: ordem, x, marker: { color: COR_SALA[sala] },
+             text: x.map(q => q ? fmt(q) : ''), textposition: 'outside', cliponaxis: false, textfont: { size: 10 },
+             hovertemplate: '%{y}<br>' + sala + ': %{x:,.0f}<extra></extra>' };
+  });
+  const el = document.getElementById(id);
+  el.style.height = Math.max(220, ordem.length * 46 + 60) + 'px';
+  const maxX = Math.max(1, ...traces.flatMap(t => t.x));
+  Plotly.react(id, traces, {
+    barmode: 'group', bargap: .25, margin: { l: 10, r: 60, t: 5, b: 30 }, separators: ',.',
+    xaxis: { showgrid: false, zeroline: false, showticklabels: false, range: [0, maxX * 1.15], fixedrange: true },
+    yaxis: { automargin: true, tickfont: { size: 10 }, fixedrange: true },
+    legend: { orientation: 'h', y: -0.02, yanchor: 'top', font: { size: 11 } },
+    paper_bgcolor: 'transparent', plot_bgcolor: 'transparent'
+  }, { responsive: true, displayModeBar: false });
+}
+
+function graficoTempo(dados) {
+  const pers = ordenarPer([...new Set(dados.map(d => d.Periodo))]);
+  const traces = ['Acolhimento', 'Procedimento'].map(sala => {
+    const y = pers.map(p => soma(dados.filter(d => d.Sala === sala && d.Periodo === p)));
+    return { type: 'scatter', mode: 'lines+markers+text', name: sala, x: pers, y, text: y.map(q => q ? fmt(q) : ''),
+             textposition: 'top center', cliponaxis: false, textfont: { size: 10, color: COR_SALA[sala] },
+             line: { color: COR_SALA[sala], width: 3 }, marker: { size: 8, color: COR_SALA[sala] },
+             hovertemplate: '%{x}<br>' + sala + ': %{y:,.0f}<extra></extra>' };
+  });
+  const maxY = Math.max(1, ...traces.flatMap(t => t.y));
+  Plotly.react('g-tempo', traces, {
+    margin: { l: 50, r: 30, t: 20, b: 40 }, separators: ',.',
+    yaxis: { range: [0, maxY * 1.25], gridcolor: '#eee', fixedrange: true }, xaxis: { fixedrange: true, type: 'category' },
+    legend: { orientation: 'h', y: 1.15, font: { size: 11 } },
+    paper_bgcolor: 'transparent', plot_bgcolor: 'transparent'
+  }, { responsive: true, displayModeBar: false });
+}
+
+function tabela(dados) {
+  const linhas = [...dados].sort((a, b) => b.Quantidade - a.Quantidade).slice(0, 300);
+  document.getElementById('tabela').innerHTML = linhas.map(d => `<tr><td>${d.UBS}</td>
+    <td><span class="tag" style="background:${COR_SALA[d.Sala]}">${d.Sala}</span></td><td>${d['Profissão']}</td>
+    <td>${d.Equipe}</td><td>${d.Periodo}</td><td class="n">${fmt(d.Quantidade)}</td></tr>`).join('')
+    || '<tr><td colspan="6" style="text-align:center;color:#6c757d;padding:14px">Nenhum dado para os filtros selecionados.</td></tr>';
+}
+
+// ---------------- Pop-ups ----------------
+function mostrarInfo(icone, titulo, sub, corpo) {
+  document.getElementById('info-conteudo').innerHTML = `<div class="info-topo"><span class="info-ico">${icone}</span><h2>${titulo}</h2>${sub ? `<div class="info-sub">${sub}</div>` : ''}</div><div class="info-corpo">${corpo}</div>`;
+  document.getElementById('info-modal').classList.add('aberto');
+}
+function fecharInfo() { document.getElementById('info-modal').classList.remove('aberto'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharInfo(); });
+function subFiltros(f, ignorar) {
+  const p = []; ignorar = ignorar || [];
+  if (f.ubs !== 'Todos' && !ignorar.includes('ubs')) p.push('UBS: ' + f.ubs);
+  if (f.sala !== 'Todos' && !ignorar.includes('sala')) p.push('Sala: ' + f.sala);
+  if (f.prof !== 'Todos' && !ignorar.includes('prof')) p.push('Profissão: ' + f.prof);
+  if (f.per !== 'Todos' && !ignorar.includes('per')) p.push(ROT + ': ' + f.per);
+  return p.length ? 'Filtros: ' + p.join(' · ') : 'Considerando todos os dados';
+}
+function numeros(l) { return '<div class="info-numeros">' + l.map(([v, r, c]) => `<div class="info-num"><b class="${c || ''}">${v}</b><span>${r}</span></div>`).join('') + '</div>'; }
+function miniTabela(linhas, total, corFn) {
+  const max = Math.max(1, ...linhas.map(l => l[1]));
+  return '<table class="mini-tab">' + linhas.map(([n, q]) => `<tr><td>${corFn ? `<span class="bolinha" style="background:${corFn(n)}"></span>` : ''}${n}</td>
+    <td style="width:28%"><div class="mini-barra"><div style="width:${q / max * 100}%;background:${corFn ? corFn(n) : '#6a9ab0'}"></div></div></td>
+    <td class="n">${fmt(q)}</td><td class="n" style="color:#6c757d">${fmtPct(total ? q / total * 100 : 0)}</td></tr>`).join('') + '</table>';
+}
+function glossario() {
+  return '<h3>As duas salas</h3><div class="glossario">' + Object.entries(INFO_SALA).map(([n, i]) => `<div class="glossario-item" style="--c:${COR_SALA[n]}"><b>${i.icone} Sala de ${n}</b><br>${i.texto}</div>`).join('') + '</div>';
+}
+function abrirInfo(k) {
+  const i = INFO[k]; let c = i.texto.map(t => `<p>${t}</p>`).join('');
+  if (i.alerta) c += `<div class="info-alerta">⚠️ ${i.alerta}</div>`;
+  if (i.glossario) c += glossario();
+  mostrarInfo(i.icone, i.titulo, '', c);
+}
+function abrirSala(sala) {
+  const f = filtros(), base = filtrar(f, ['sala']), daSala = base.filter(d => d.Sala === sala), t = soma(daSala), tg = soma(base);
+  const i = INFO_SALA[sala];
+  let c = `<p>${i.texto}</p>` + numeros([[fmt(t), 'Produção'], [fmtPct(tg ? t / tg * 100 : 0), 'da produção das salas'], [String(new Set(daSala.map(d => d.UBS)).size), 'UBS com produção']]);
+  c += `<div class="info-alerta">⚠️ ${i.alerta}</div>`;
+  c += '<h3>Por profissão</h3>' + miniTabela(somarPor(daSala, 'Profissão'), t) + '<h3>Por UBS</h3>' + miniTabela(somarPor(daSala, 'UBS'), t);
+  mostrarInfo(i.icone, 'Sala de ' + sala, subFiltros(f, ['sala']), c);
+}
+function abrirUbs(ubs) {
+  const f = filtros(), base = filtrar(f).filter(d => d.UBS === ubs), t = soma(base);
+  let c = numeros([[fmt(soma(base.filter(d => d.Sala === 'Acolhimento'))), 'Acolhimento'], [fmt(soma(base.filter(d => d.Sala === 'Procedimento'))), 'Procedimento'], [fmt(t), 'Total']]);
+  ['Acolhimento', 'Procedimento'].forEach(s => {
+    const l = base.filter(d => d.Sala === s); if (!l.length) return;
+    c += `<h3 style="color:${COR_SALA[s]}">${s}: por profissão</h3>` + miniTabela(somarPor(l, 'Profissão'), soma(l), () => COR_SALA[s]);
+  });
+  if (!base.some(d => d.Sala === 'Acolhimento')) c += '<div class="info-alerta">⚠️ Sem produção de acolhimento: esta UBS não tem profissionais na escala do acolhimento para o período.</div>';
+  mostrarInfo('🏥', ubs, subFiltros(f, ['ubs']), c);
+}
+function abrirProf(prof) {
+  const f = filtros(), base = filtrar(f).filter(d => d['Profissão'] === prof), t = soma(base);
+  let c = numeros([[fmt(soma(base.filter(d => d.Sala === 'Acolhimento'))), 'Acolhimento'], [fmt(soma(base.filter(d => d.Sala === 'Procedimento'))), 'Procedimento'], [String(new Set(base.map(d => d.UBS)).size), 'UBS']]);
+  c += '<h3>UBS onde essa profissão mais produziu</h3>' + miniTabela(somarPor(base, 'UBS'), t);
+  mostrarInfo('👩‍⚕️', prof, subFiltros(f, ['prof']), c);
+}
+function abrirPeriodo(per) {
+  const f = filtros(), semPer = filtrar(f, ['per']), pers = ordenarPer([...new Set(semPer.map(d => d.Periodo))]);
+  const doPer = semPer.filter(d => d.Periodo === per), t = soma(doPer), idx = pers.indexOf(per), ant = idx > 0 ? pers[idx - 1] : null;
+  let varTxt = '—', cls = '';
+  if (ant) { const ta = soma(semPer.filter(d => d.Periodo === ant)); if (ta) { const x = (t - ta) / ta * 100; varTxt = (x >= 0 ? '+' : '') + fmtPct(x); cls = x >= 0 ? 'sobe' : 'desce'; } }
+  const terceiro = MODO === 'mensal' ? [String(new Set(doPer.map(d => d.UBS)).size), 'UBS com produção'] : [mesesPer[per] + ' de 4', 'meses com dados'];
+  let c = numeros([[fmt(t), 'Produção das salas'], [varTxt, ant ? 'vs. ' + ant : 'sem período anterior', cls], terceiro]);
+  if (MODO !== 'mensal' && mesesPer[per] < 4) c += `<div class="info-alerta">⚠️ Este quadrimestre tem só ${mesesPer[per]} ${mesesPer[per] === 1 ? 'mês' : 'meses'} com dados.</div>`;
+  c += '<h3>Por sala</h3>' + miniTabela(somarPor(doPer, 'Sala'), t, n => COR_SALA[n]) + '<h3>Por UBS</h3>' + miniTabela(somarPor(doPer, 'UBS'), t);
+  mostrarInfo('📅', per, subFiltros(f, ['per']), c);
+}
+function ligarCliques() {
+  const alvos = { 'g-ubs': p => abrirUbs(p.y), 'g-prof': p => abrirProf(p.y), 'g-tempo': p => abrirPeriodo(p.x) };
+  Object.entries(alvos).forEach(([id, fn]) => {
+    const el = document.getElementById(id);
+    if (el && el.on && !el.dataset.lig) { el.on('plotly_click', ev => { if (ev.points && ev.points.length) fn(ev.points[0]); }); el.dataset.lig = '1'; }
+  });
+}
+window.onload = iniciar;
+</script>
+</body>
+</html>
